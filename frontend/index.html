@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriConnect Finance Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="overlay"></div>
+    <div class="background-container">
+        <img src="/bg.png" alt="Background" class="bg-image">
+    </div>
+
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">
+                    <i data-lucide="leaf"></i>
+                    <span>AgriConnect <strong>HUB</strong></span>
+                </div>
+                <div class="nav-links">
+                    <button class="nav-item active" data-view="dashboard">Welelani</button>
+                    <button class="nav-item" data-view="transactions">Ivo Mwapanga</button>
+                    <button class="logout-btn">Logout <i data-lucide="log-out"></i></button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Dashboard View -->
+        <section id="dashboard" class="view">
+            <div class="hero">
+                <h1>Belengelani Chuma Chinu chose Pano</h1>
+                <p>muwezgenge zinu  zose?</p>
+            </div>
+
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="card-icon income"><i data-lucide="trending-up"></i></div>
+                    <div class="card-info">
+                        <span class="label">Total Received</span>
+                        <h2 id="total-received">$0.00</h2>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon expense"><i data-lucide="trending-down"></i></div>
+                    <div class="card-info">
+                           <!-- Total Expenses -->
+                        <span class="label">chaKa chino Mwagwirisa</span>
+                        <h2 id="total-invested">MWK0.00</h2>
+                    </div>
+                </div>
+                <div class="summary-card highlight">
+                    <div class="card-icon cash"><i data-lucide="wallet"></i></div>
+                    <div class="card-info">
+                        <!-- Cash Balance -->
+                        <span class="label">Zoti muwezge za chaKa chino</span>
+                        <h2 id="cash-balance">MWK0.00</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-grid secondary">
+                <div class="summary-card small">
+                    <div class="card-info">
+                        <span class="label">Mwabwelekeska</span>
+                        <h3 id="total-lent">MWK0.00</h3>
+                    </div>
+                </div>
+                <div class="summary-card small">
+                    <div class="card-info">
+                        <!-- Total Loans -->
+                        <span class="label">Ngongole Zose za chaKa ichi</span>
+                        <h3 id="total-loans">$0.00</h3>
+                    </div>
+                </div>
+                <div class="summary-card small warning">
+                    <div class="card-info">
+                        <!-- Loans Remaining -->
+                        <span class="label">Ngongole mwakhala nazo</span>
+                        <h3 id="loans-remaining">$0.00</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-grid">
+                <button class="action-btn" onclick="openModal('investment')">
+                    <i data-lucide="plus-circle"></i>
+                    <!-- Add Investment -->
+                    <span>Mwagula Vichi?</span>
+                </button>
+                <button class="action-btn" onclick="openModal('loan')">
+                    <i data-lucide="landmark"></i>
+                    <!-- Add Loan Taken -->
+                    <span>Mwatola Ngongole?</span>
+                </button>
+                <button class="action-btn" onclick="openModal('repayment')">
+                    <i data-lucide="credit-card"></i>
+                    <!-- Repay Loan -->
+                    <span>Mwalipira Ngongole?</span>
+                </button>
+                <button class="action-btn" onclick="openModal('moneyLent')">
+                    <i data-lucide="hand-metal"></i>
+                    <!-- Add Money Lent -->
+                    <span>Mwabwelekeska Zilinga?</span>
+                </button>
+                <button class="action-btn" onclick="openModal('income')">
+                    <i data-lucide="piggy-bank"></i>
+                    <span>Add Income</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Transaction History View -->
+        <section id="transactions" class="view hidden">
+            <div class="section-header">
+                <h2>Transaction History</h2>
+                <button class="back-btn" onclick="showView('dashboard')"><i data-lucide="arrow-left"></i> Back</button>
+            </div>
+            <div id="history-container">
+                <!-- Records will be injected here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="modal-container" class="modal-overlay hidden">
+        <div class="modal">
+            <button class="close-modal" onclick="closeModal()"><i data-lucide="x"></i></button>
+            <h2 id="modal-title">Add Transaction</h2>
+            <form id="transaction-form">
+                <div id="form-fields">
+                    <!-- Dynamic fields here -->
+                </div>
+                <button type="submit" class="submit-btn">Save Record</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification hidden">
+        <div class="notification-content">
+            <i data-lucide="check-circle" id="notif-icon"></i>
+            <span id="notif-message">Transaction added successfully!</span>
+        </div>
+    </div>
+
+    <script type="module" src="/main.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
