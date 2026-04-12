@@ -94,14 +94,29 @@ app.post('/api/money-received', async (req, res) => {
     }
 });
 
-// 6. View Summary
+// 6. Archive Season
+app.post('/api/archive', async (req, res) => {
+    try {
+        await Investment.collection.updateMany({}, { $set: { archived: true } });
+        await Loan.collection.updateMany({}, { $set: { archived: true } });
+        await Repayment.collection.updateMany({}, { $set: { archived: true } });
+        await MoneyLent.collection.updateMany({}, { $set: { archived: true } });
+        await MoneyReceived.collection.updateMany({}, { $set: { archived: true } });
+        res.json({ message: 'Season archived successfully.' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 7. View Summary
 app.get('/api/summary', async (req, res) => {
     try {
-        const investments = await Investment.find();
-        const loans = await Loan.find();
-        const repayments = await Repayment.find();
-        const moneyLent = await MoneyLent.find();
-        const moneyReceived = await MoneyReceived.find();
+        const query = { archived: { $ne: true } };
+        const investments = await Investment.find(query);
+        const loans = await Loan.find(query);
+        const repayments = await Repayment.find(query);
+        const moneyLent = await MoneyLent.find(query);
+        const moneyReceived = await MoneyReceived.find(query);
 
         const totalInvested = investments.reduce((sum, item) => sum + item.amount, 0);
         const totalLoansTaken = loans.reduce((sum, item) => sum + item.amount, 0);
@@ -176,7 +191,7 @@ app.put('/api/:type/:id', async (req, res) => {
 // List loans for repayment selection
 app.get('/api/loans', async (req, res) => {
     try {
-        const loans = await Loan.find({ balance: { $gt: 0 } });
+        const loans = await Loan.find({ balance: { $gt: 0 }, archived: { $ne: true } });
         res.json(loans);
     } catch (error) {
         res.status(500).json({ error: error.message });

@@ -203,6 +203,20 @@ window.deleteRecord = async function(id, endpointType) {
     } catch (e) { console.error(e); }
 };
 
+window.archiveData = async function() {
+    if (!confirm('TCHENJEZO: Izitseka deta yonse mu deshibodi yanu ndi kuyamba chaka chatsopano! (WARNING: This will clear the dashboard and start a new season. Your old data is safely stored in the database).')) return;
+    try {
+        const response = await fetch(`${API_BASE}/archive`, { method: 'POST' });
+        if (response.ok) {
+            showNotification('Season archived successfully!');
+            fetchSummary();
+            if (currentView === 'transactions') fetchHistory();
+        } else {
+            alert('Failed to archive season');
+        }
+    } catch (e) { console.error(e); }
+};
+
 window.editRecord = async function(id, endpointType) {
     let type = '', historyList = [];
     if (endpointType === 'investments') { type = 'investment'; historyList = window.globalHistoryData.investments; }
