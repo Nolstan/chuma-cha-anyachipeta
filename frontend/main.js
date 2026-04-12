@@ -6,7 +6,8 @@ let currentView = 'dashboard';
 // DOM Elements
 const views = {
     dashboard: document.getElementById('dashboard'),
-    transactions: document.getElementById('transactions')
+    transactions: document.getElementById('transactions'),
+    tenants: document.getElementById('tenants')
 };
 
 const summary = {
