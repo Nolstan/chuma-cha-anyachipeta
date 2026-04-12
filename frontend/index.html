@@ -16,23 +16,21 @@
         <img src="/bg.png" alt="Background" class="bg-image">
     </div>
 
-    <header>
-        <div class="container">
-            <nav>
-                <div class="logo">
-                    <i data-lucide="leaf"></i>
-                    <span>AgriConnect <strong>HUB</strong></span>
-                </div>
-                <div class="nav-links">
-                    <button class="nav-item active" data-view="dashboard">Welelani</button>
-                    <button class="nav-item" data-view="transactions">Ivo Mwapanga</button>
-                    <button class="logout-btn">Logout <i data-lucide="log-out"></i></button>
-                </div>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <i data-lucide="leaf"></i>
+                <span>AgriConnect <strong>HUB</strong></span>
+            </div>
+            <nav class="nav-links">
+                <button class="nav-item active" data-view="dashboard"><i data-lucide="layout-dashboard"></i> Welelani</button>
+                <button class="nav-item" data-view="transactions"><i data-lucide="list"></i> Ivo Mwapanga</button>
+                <div class="spacer"></div>
+                <button class="logout-btn">Logout <i data-lucide="log-out"></i></button>
             </nav>
-        </div>
-    </header>
+        </aside>
 
-    <main class="container">
+        <main class="main-content">
         <!-- Dashboard View -->
         <section id="dashboard" class="view">
             <div class="hero">
@@ -62,6 +60,13 @@
                         <!-- Cash Balance -->
                         <span class="label">Zoti muwezge za chaKa chino</span>
                         <h2 id="cash-balance">MWK0.00</h2>
+                    </div>
+                </div>
+                <div class="summary-card" id="profit-card">
+                    <div class="card-icon" id="profit-icon"><i data-lucide="activity"></i></div>
+                    <div class="card-info">
+                        <span class="label" id="profit-label">Phindu / Net Profit</span>
+                        <h2 id="net-profit">MWK0.00</h2>
                     </div>
                 </div>
             </div>
@@ -128,6 +133,7 @@
             </div>
         </section>
     </main>
+    </div> <!-- /app-container -->
 
     <!-- Modals -->
     <div id="modal-container" class="modal-overlay hidden">

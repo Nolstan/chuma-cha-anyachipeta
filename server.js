@@ -132,6 +132,47 @@ app.get('/api/summary', async (req, res) => {
     }
 });
 
+// Generic Delete
+app.delete('/api/:type/:id', async (req, res) => {
+    try {
+        const models = { 'investments': Investment, 'loans': Loan, 'repayments': Repayment, 'money-lent': MoneyLent, 'money-received': MoneyReceived };
+        const Model = models[req.params.type];
+        if (!Model) return res.status(400).json({ error: 'Invalid type' });
+        
+        if (req.params.type === 'repayments') {
+            const rep = await Repayment.findById(req.params.id);
+            if (rep) {
+                const loan = await Loan.findById(rep.loanId);
+                if (loan) { loan.balance += rep.amount; await loan.save(); }
+            }
+        }
+        await Model.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Deleted' });
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+// Generic Update
+app.put('/api/:type/:id', async (req, res) => {
+    try {
+        const models = { 'investments': Investment, 'loans': Loan, 'repayments': Repayment, 'money-lent': MoneyLent, 'money-received': MoneyReceived };
+        const Model = models[req.params.type];
+        if (!Model) return res.status(400).json({ error: 'Invalid type' });
+
+        if (req.params.type === 'repayments') {
+            const oldRep = await Repayment.findById(req.params.id);
+            if (oldRep && req.body.amount !== undefined) {
+                const loan = await Loan.findById(oldRep.loanId);
+                if (loan) {
+                    loan.balance = loan.balance + oldRep.amount - Number(req.body.amount);
+                    await loan.save();
+                }
+            }
+        }
+        const updated = await Model.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(updated);
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 // List loans for repayment selection
 app.get('/api/loans', async (req, res) => {
     try {

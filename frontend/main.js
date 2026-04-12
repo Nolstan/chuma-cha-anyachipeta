@@ -15,7 +15,11 @@ const summary = {
     cashBalance: document.getElementById('cash-balance'),
     totalLent: document.getElementById('total-lent'),
     totalLoans: document.getElementById('total-loans'),
-    loansRemaining: document.getElementById('loans-remaining')
+    loansRemaining: document.getElementById('loans-remaining'),
+    netProfit: document.getElementById('net-profit'),
+    profitCard: document.getElementById('profit-card'),
+    profitIcon: document.getElementById('profit-icon'),
+    profitLabel: document.getElementById('profit-label')
 };
 
 const modal = document.getElementById('modal-container');
@@ -56,6 +60,7 @@ async function fetchSummary() {
     try {
         const response = await fetch(`${API_BASE}/summary`);
         const data = await response.json();
+        window.globalHistoryData = data.history;
 
         summary.totalReceived.innerText = formatCurrency(data.totalReceived);
         summary.totalInvested.innerText = formatCurrency(data.totalInvested);
@@ -64,8 +69,26 @@ async function fetchSummary() {
         summary.totalLoans.innerText = formatCurrency(data.totalLoansTaken);
         summary.loansRemaining.innerText = formatCurrency(data.loansRemaining);
 
+        // Calculate and theme Profit / Loss
+        const netProfitValue = data.totalReceived - data.totalInvested;
+        if (netProfitValue >= 0) {
+            summary.netProfit.innerText = formatCurrency(netProfitValue);
+            summary.profitCard.className = 'summary-card highlight';
+            summary.profitIcon.className = 'card-icon income';
+            summary.profitIcon.innerHTML = '<i data-lucide="trending-up"></i>';
+            summary.profitLabel.innerText = 'Phindu (Profit) ✅';
+        } else {
+            summary.netProfit.innerText = '-' + formatCurrency(Math.abs(netProfitValue));
+            summary.profitCard.className = 'summary-card warning';
+            summary.profitIcon.className = 'card-icon expense';
+            summary.profitIcon.innerHTML = '<i data-lucide="trending-down"></i>';
+            summary.profitLabel.innerText = 'Kutaya (Loss) ❌';
+        }
+
         // Update summary card color for cash balance
         summary.cashBalance.parentElement.parentElement.classList.toggle('warning', data.cashBalance < 0);
+        
+        lucide.createIcons();
     } catch (error) {
         console.error('Error fetching summary:', error);
     }
@@ -89,15 +112,28 @@ async function fetchHistory() {
         allHistory.forEach(record => {
             const card = document.createElement('div');
             card.className = 'history-card';
+            let endpointType = '';
+            if (record.type === 'Mwagula' || record.type === 'Investment') endpointType = 'investments';
+            else if (record.type === 'Ngongole ya' || record.type === 'Loan Taken') endpointType = 'loans';
+            else if (record.type === 'Mwawezga Ngongole ya' || record.type === 'Loan Repayment') endpointType = 'repayments';
+            else if (record.type === 'Mwabwelekeska' || record.type === 'Money Lent') endpointType = 'money-lent';
+            else if (record.type === 'Income') endpointType = 'money-received';
+
             card.innerHTML = `
                 <div class="record-info">
                     <h4>${record.type} ${record.category ? `(${record.category})` : ''} ${record.label ? `- ${record.label}` : ''}</h4>
                     <span>${new Date(record.date).toLocaleDateString()}</span>
                 </div>
-                <div class="record-amount ${record.color}">${record.color === 'expense' ? '-' : '+'}${formatCurrency(record.amount)}</div>
+                <div class="record-actions">
+                    <span class="record-amount ${record.color}">${record.color === 'expense' ? '-' : '+'}${formatCurrency(record.amount)}</span>
+                    <button class="icon-btn edit-btn" onclick="editRecord('${record._id}', '${endpointType}')" title="Edit"><i data-lucide="edit"></i></button>
+                    <button class="icon-btn delete-btn" onclick="deleteRecord('${record._id}', '${endpointType}')" title="Delete"><i data-lucide="trash-2"></i></button>
+                </div>
             `;
             container.appendChild(card);
         });
+        
+        lucide.createIcons();
     } catch (error) {
         console.error('Error fetching history:', error);
     }
@@ -149,6 +185,51 @@ window.openModal = async function (type) {
 
 window.closeModal = function () {
     modal.classList.add('hidden');
+    delete transactionForm.dataset.editId;
+    delete transactionForm.dataset.editEndpoint;
+};
+
+window.deleteRecord = async function(id, endpointType) {
+    if (!confirm('Are you sure you want to delete this record?')) return;
+    try {
+        const response = await fetch(`${API_BASE}/${endpointType}/${id}`, { method: 'DELETE' });
+        if (response.ok) {
+            showNotification('Record deleted successfully');
+            fetchSummary();
+            fetchHistory();
+        } else {
+            alert('Failed to delete record');
+        }
+    } catch (e) { console.error(e); }
+};
+
+window.editRecord = async function(id, endpointType) {
+    let type = '', historyList = [];
+    if (endpointType === 'investments') { type = 'investment'; historyList = window.globalHistoryData.investments; }
+    if (endpointType === 'loans') { type = 'loan'; historyList = window.globalHistoryData.loans; }
+    if (endpointType === 'repayments') { type = 'repayment'; historyList = window.globalHistoryData.repayments; }
+    if (endpointType === 'money-lent') { type = 'moneyLent'; historyList = window.globalHistoryData.moneyLent; }
+    if (endpointType === 'money-received') { type = 'income'; historyList = window.globalHistoryData.moneyReceived; }
+
+    const record = historyList.find(r => r._id === id);
+    if (!record) return;
+
+    await openModal(type);
+    modalTitle.innerText = 'Edit ' + type.charAt(0).toUpperCase() + type.slice(1);
+    
+    transactionForm.dataset.editId = id;
+    transactionForm.dataset.editEndpoint = endpointType;
+
+    Object.keys(record).forEach(key => {
+        const input = transactionForm.elements[key];
+        if (input) {
+            if (input.type === 'date') {
+                input.value = new Date(record[key]).toISOString().split('T')[0];
+            } else {
+                input.value = record[key];
+            }
+        }
+    });
 };
 
 function addField(label, name, type, value = '') {
@@ -187,15 +268,23 @@ async function handleFormSubmit(e) {
         case 'income': endpoint = '/money-received'; break;
     }
 
+    let url = `${API_BASE}${endpoint}`;
+    let method = 'POST';
+
+    if (transactionForm.dataset.editId) {
+        url = `${API_BASE}/${transactionForm.dataset.editEndpoint}/${transactionForm.dataset.editId}`;
+        method = 'PUT';
+    }
+
     try {
-        const response = await fetch(`${API_BASE}${endpoint}`, {
-            method: 'POST',
+        const response = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
 
         if (response.ok) {
-            showNotification(`Record added successfully!`);
+            showNotification(method === 'POST' ? 'Record added successfully!' : 'Record updated successfully!');
             closeModal();
             fetchSummary();
             if (currentView === 'transactions') fetchHistory();
