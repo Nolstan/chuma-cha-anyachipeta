@@ -12,7 +12,6 @@ const views = {
 const summary = {
     totalReceived: document.getElementById('total-received'),
     totalInvested: document.getElementById('total-invested'),
-    cashBalance: document.getElementById('cash-balance'),
     totalLent: document.getElementById('total-lent'),
     totalLoans: document.getElementById('total-loans'),
     loansRemaining: document.getElementById('loans-remaining'),
@@ -64,7 +63,6 @@ async function fetchSummary() {
 
         summary.totalReceived.innerText = formatCurrency(data.totalReceived);
         summary.totalInvested.innerText = formatCurrency(data.totalInvested);
-        summary.cashBalance.innerText = formatCurrency(data.cashBalance);
         summary.totalLent.innerText = formatCurrency(data.totalLent);
         summary.totalLoans.innerText = formatCurrency(data.totalLoansTaken);
         summary.loansRemaining.innerText = formatCurrency(data.loansRemaining);
@@ -84,9 +82,6 @@ async function fetchSummary() {
             summary.profitIcon.innerHTML = '<i data-lucide="trending-down"></i>';
             summary.profitLabel.innerText = 'Kutaya (Loss) ❌';
         }
-
-        // Update summary card color for cash balance
-        summary.cashBalance.parentElement.parentElement.classList.toggle('warning', data.cashBalance < 0);
         
         lucide.createIcons();
     } catch (error) {
