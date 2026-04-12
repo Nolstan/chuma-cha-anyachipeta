@@ -20,11 +20,12 @@
         <aside class="sidebar">
             <div class="logo">
                 <i data-lucide="leaf"></i>
-                <span>AgriConnect <strong>HUB</strong></span>
+                <span>AgriChipeta <strong>HUB</strong></span>
             </div>
             <nav class="nav-links">
                 <button class="nav-item active" data-view="dashboard"><i data-lucide="layout-dashboard"></i> Welelani</button>
                 <button class="nav-item" data-view="transactions"><i data-lucide="list"></i> Ivo Mwapanga</button>
+                <button class="nav-item" data-view="tenants"><i data-lucide="users"></i> Antchito</button>
                 <button class="nav-item" onclick="archiveData()"><i data-lucide="archive"></i> Tseka Chaka</button>
                 <div class="spacer"></div>
                 <button class="logout-btn">Logout <i data-lucide="log-out"></i></button>
@@ -86,6 +87,13 @@
                         <h3 id="loans-remaining">$0.00</h3>
                     </div>
                 </div>
+                <div class="summary-card small info">
+                    <div class="card-info">
+                        <!-- Tenant Advances -->
+                        <span class="label">Advansi ya Antchito</span>
+                        <h3 id="total-tenant-advances">MWK0.00</h3>
+                    </div>
+                </div>
             </div>
 
             <div class="action-grid">
@@ -113,6 +121,10 @@
                     <i data-lucide="piggy-bank"></i>
                     <span>Add Income</span>
                 </button>
+                <button class="action-btn" onclick="openModal('tenantAdvance')">
+                    <i data-lucide="users"></i>
+                    <span>Zotenga Antchito?</span>
+                </button>
             </div>
         </section>
 
@@ -124,6 +136,20 @@
             </div>
             <div id="history-container">
                 <!-- Records will be injected here -->
+            </div>
+        </section>
+
+        <!-- Tenants View -->
+        <section id="tenants" class="view hidden">
+            <div class="section-header">
+                <h2>Ogwira Ntchito (Tenants)</h2>
+                <button class="action-btn" style="padding: 10px 20px; font-size: 0.9rem;" onclick="openModal('tenant')">
+                    <i data-lucide="user-plus"></i>
+                    <span>Tiyike Antchito Watsopano</span>
+                </button>
+            </div>
+            <div id="tenants-container">
+                <!-- Tenant cards injected here -->
             </div>
         </section>
     </main>

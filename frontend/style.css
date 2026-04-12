@@ -409,6 +409,26 @@ form input:focus { border-color: var(--primary); }
     to { transform: translateX(0); opacity: 1; }
 }
 
+.tenant-breakdown {
+    margin-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.tenant-breakdown div {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+.tenant-breakdown div span {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
 @media (max-width: 768px) {
     .app-container { flex-direction: column; }
     .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 1px solid var(--glass-border); padding: 20px; }

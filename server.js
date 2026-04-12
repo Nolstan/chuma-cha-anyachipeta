@@ -25,6 +25,8 @@ const Loan = require('./models/Loan');
 const Repayment = require('./models/Repayment');
 const MoneyLent = require('./models/MoneyLent');
 const MoneyReceived = require('./models/MoneyReceived');
+const TenantAdvance = require('./models/TenantAdvance');
+const Tenant = require('./models/Tenant');
 
 // Routes
 // 1. Add Investment
@@ -94,7 +96,16 @@ app.post('/api/money-received', async (req, res) => {
     }
 });
 
-// 6. Archive Season
+// 6. Add Tenant Advance
+app.post('/api/tenant-advances', async (req, res) => {
+    try {
+        const item = new TenantAdvance(req.body);
+        await item.save();
+        res.status(201).json(item);
+    } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+// 7. Archive Season
 app.post('/api/archive', async (req, res) => {
     try {
         await Investment.collection.updateMany({}, { $set: { archived: true } });
@@ -102,6 +113,8 @@ app.post('/api/archive', async (req, res) => {
         await Repayment.collection.updateMany({}, { $set: { archived: true } });
         await MoneyLent.collection.updateMany({}, { $set: { archived: true } });
         await MoneyReceived.collection.updateMany({}, { $set: { archived: true } });
+        await TenantAdvance.collection.updateMany({}, { $set: { archived: true } });
+        await Tenant.collection.updateMany({}, { $set: { archived: true } });
         res.json({ message: 'Season archived successfully.' });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -124,6 +137,14 @@ app.get('/api/summary', async (req, res) => {
         const loansRemaining = loans.reduce((sum, item) => sum + item.balance, 0);
         const totalLent = moneyLent.reduce((sum, item) => sum + item.amount, 0);
         const totalReceived = moneyReceived.reduce((sum, item) => sum + item.amount, 0);
+        const tenantAdvances = await TenantAdvance.find(query);
+        const totalTenantAdvances = tenantAdvances.reduce((sum, item) => sum + item.amount, 0);
+
+        const tenantBreakdown = {};
+        tenantAdvances.forEach(adv => {
+            const name = adv.tenantName ? adv.tenantName.trim().toUpperCase() : 'UNKNOWN';
+            tenantBreakdown[name] = (tenantBreakdown[name] || 0) + adv.amount;
+        });
 
         const cashBalance = totalReceived + totalLoansTaken - totalInvested - totalLent - totalRepayments;
 
@@ -133,13 +154,16 @@ app.get('/api/summary', async (req, res) => {
             loansRemaining,
             totalLent,
             totalReceived,
+            totalTenantAdvances,
+            tenantBreakdown,
             cashBalance,
             history: {
                 investments,
                 loans,
                 repayments,
                 moneyLent,
-                moneyReceived
+                moneyReceived,
+                tenantAdvances
             }
         });
     } catch (error) {
@@ -150,7 +174,7 @@ app.get('/api/summary', async (req, res) => {
 // Generic Delete
 app.delete('/api/:type/:id', async (req, res) => {
     try {
-        const models = { 'investments': Investment, 'loans': Loan, 'repayments': Repayment, 'money-lent': MoneyLent, 'money-received': MoneyReceived };
+        const models = { 'investments': Investment, 'loans': Loan, 'repayments': Repayment, 'money-lent': MoneyLent, 'money-received': MoneyReceived, 'tenant-advances': TenantAdvance, 'tenants': Tenant };
         const Model = models[req.params.type];
         if (!Model) return res.status(400).json({ error: 'Invalid type' });
         
@@ -169,7 +193,7 @@ app.delete('/api/:type/:id', async (req, res) => {
 // Generic Update
 app.put('/api/:type/:id', async (req, res) => {
     try {
-        const models = { 'investments': Investment, 'loans': Loan, 'repayments': Repayment, 'money-lent': MoneyLent, 'money-received': MoneyReceived };
+        const models = { 'investments': Investment, 'loans': Loan, 'repayments': Repayment, 'money-lent': MoneyLent, 'money-received': MoneyReceived, 'tenant-advances': TenantAdvance, 'tenants': Tenant };
         const Model = models[req.params.type];
         if (!Model) return res.status(400).json({ error: 'Invalid type' });
 
@@ -196,6 +220,22 @@ app.get('/api/loans', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+});
+
+// Tenants management
+app.post('/api/tenants', async (req, res) => {
+    try {
+        const tenant = new Tenant(req.body);
+        await tenant.save();
+        res.status(201).json(tenant);
+    } catch (error) { res.status(400).json({ error: error.message }); }
+});
+
+app.get('/api/tenants', async (req, res) => {
+    try {
+        const tenants = await Tenant.find({ archived: { $ne: true } });
+        res.json(tenants);
+    } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
 const PORT = process.env.PORT || 5000;

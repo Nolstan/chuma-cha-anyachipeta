@@ -15,6 +15,7 @@ const summary = {
     totalLent: document.getElementById('total-lent'),
     totalLoans: document.getElementById('total-loans'),
     loansRemaining: document.getElementById('loans-remaining'),
+    totalTenantAdvances: document.getElementById('total-tenant-advances'),
     netProfit: document.getElementById('net-profit'),
     profitCard: document.getElementById('profit-card'),
     profitIcon: document.getElementById('profit-icon'),
@@ -53,6 +54,9 @@ function showView(viewId) {
     if (viewId === 'transactions') {
         fetchHistory();
     }
+    if (viewId === 'tenants') {
+        renderTenantsView();
+    }
 }
 
 async function fetchSummary() {
@@ -60,12 +64,14 @@ async function fetchSummary() {
         const response = await fetch(`${API_BASE}/summary`);
         const data = await response.json();
         window.globalHistoryData = data.history;
+        window.globalTenantBreakdown = data.tenantBreakdown;
 
         summary.totalReceived.innerText = formatCurrency(data.totalReceived);
         summary.totalInvested.innerText = formatCurrency(data.totalInvested);
         summary.totalLent.innerText = formatCurrency(data.totalLent);
         summary.totalLoans.innerText = formatCurrency(data.totalLoansTaken);
         summary.loansRemaining.innerText = formatCurrency(data.loansRemaining);
+        if(summary.totalTenantAdvances) summary.totalTenantAdvances.innerText = formatCurrency(data.totalTenantAdvances);
 
         // Calculate and theme Profit / Loss
         const netProfitValue = data.totalReceived - data.totalInvested;
@@ -113,6 +119,7 @@ async function fetchHistory() {
             else if (record.type === 'Mwawezga Ngongole ya' || record.type === 'Loan Repayment') endpointType = 'repayments';
             else if (record.type === 'Mwabwelekeska' || record.type === 'Money Lent') endpointType = 'money-lent';
             else if (record.type === 'Income') endpointType = 'money-received';
+            else if (record.type === 'Katundu wa Antchito') endpointType = 'tenant-advances';
 
             card.innerHTML = `
                 <div class="record-info">
@@ -174,6 +181,23 @@ window.openModal = async function (type) {
             addField('Source', 'source', 'text');
             addField('Date', 'date', 'date', new Date().toISOString().split('T')[0]);
             break;
+        case 'tenant':
+            modalTitle.innerText = 'Tiyike Wantchito (Add Tenant)';
+            addField('Dzina la Wantchito', 'name', 'text');
+            break;
+        case 'tenantAdvance':
+            modalTitle.innerText = 'Zotenga Antchito';
+            const tenants = await fetchTenants();
+            if(tenants.length === 0) {
+                alert('Chonde yambani mwawonjezera dzina la wantchito. (Please add a Tenant first using Tiyike Antchito).');
+                closeModal();
+                return;
+            }
+            addField('Ndalama (Value)', 'amount', 'number');
+            addField('Zomwe Atenga (e.g. Ufa)', 'label', 'text');
+            addSelect('Dzina la Wantchito', 'tenantName', tenants.map(t => ({ value: t.name, label: t.name })));
+            addField('Tsiku (Date)', 'date', 'date', new Date().toISOString().split('T')[0]);
+            break;
     }
     lucide.createIcons();
 };
@@ -219,6 +243,7 @@ window.editRecord = async function(id, endpointType) {
     if (endpointType === 'repayments') { type = 'repayment'; historyList = window.globalHistoryData.repayments; }
     if (endpointType === 'money-lent') { type = 'moneyLent'; historyList = window.globalHistoryData.moneyLent; }
     if (endpointType === 'money-received') { type = 'income'; historyList = window.globalHistoryData.moneyReceived; }
+    if (endpointType === 'tenant-advances') { type = 'tenantAdvance'; historyList = window.globalHistoryData.tenantAdvances; }
 
     const record = historyList.find(r => r._id === id);
     if (!record) return;
@@ -275,6 +300,8 @@ async function handleFormSubmit(e) {
         case 'repayment': endpoint = '/repayments'; break;
         case 'moneyLent': endpoint = '/money-lent'; break;
         case 'income': endpoint = '/money-received'; break;
+        case 'tenantAdvance': endpoint = '/tenant-advances'; break;
+        case 'tenant': endpoint = '/tenants'; break;
     }
 
     let url = `${API_BASE}${endpoint}`;
@@ -297,6 +324,7 @@ async function handleFormSubmit(e) {
             closeModal();
             fetchSummary();
             if (currentView === 'transactions') fetchHistory();
+            if (currentView === 'tenants') renderTenantsView();
         } else {
             const err = await response.json();
             alert(`Error: ${err.error}`);
@@ -311,10 +339,53 @@ async function fetchLoans() {
     return await res.json();
 }
 
+async function fetchTenants() {
+    const res = await fetch(`${API_BASE}/tenants`);
+    return await res.json();
+}
+
 /** Utils **/
 function formatCurrency(amount) {
     return new Intl.NumberFormat('en-MW', { style: 'currency', currency: 'MWK' }).format(amount);
 }
+
+window.renderTenantsView = async function() {
+    const container = document.getElementById('tenants-container');
+    container.innerHTML = '<p class="text-muted">Loading...</p>';
+    
+    try {
+        const tenants = await fetchTenants();
+        const breakdown = window.globalTenantBreakdown || {};
+        
+        container.innerHTML = '';
+        if (tenants.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">Palibe wantchito anayikidwa system. (No tenants active yet).</p>';
+            return;
+        }
+        
+        tenants.forEach(t => {
+            const nameKey = t.name.trim().toUpperCase();
+            const owed = breakdown[nameKey] || 0;
+            
+            const card = document.createElement('div');
+            card.className = 'history-card';
+            card.innerHTML = `
+                <div class="record-info">
+                    <h4><i data-lucide="user" style="display:inline-block; vertical-align:middle; width:16px;"></i> ${t.name}</h4>
+                    <span>Yolembedwa pa: ${new Date(t.date).toLocaleDateString()}</span>
+                </div>
+                <div class="record-actions">
+                    <span class="record-amount expense">${owed > 0 ? '-' + formatCurrency(owed) : formatCurrency(0)}</span>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+        lucide.createIcons();
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p>Failed to load tenants</p>';
+    }
+};
 
 function showNotification(message) {
     const notif = document.getElementById('notification');
