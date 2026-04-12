@@ -108,7 +108,8 @@ async function fetchHistory() {
             ...data.history.loans.map(l => ({ ...l, type: 'Ngongole ya', color: 'income', label: l.lender })),
             ...data.history.repayments.map(rp => ({ ...rp, type: 'Mwawezga Ngongole ya', color: 'expense', label: rp.lender })),
             ...data.history.moneyLent.map(m => ({ ...m, type: 'Mwabwelekeska', color: 'expense', label: m.person })),
-            ...data.history.moneyReceived.map(r => ({ ...r, type: 'Income', color: 'income', label: r.source }))
+            ...data.history.moneyReceived.map(r => ({ ...r, type: 'Income', color: 'income', label: r.source })),
+            ...(data.history.tenantAdvances || []).map(t => ({ ...t, type: 'Katundu wa Antchito', color: 'expense', label: t.tenantName ? `${t.tenantName} (${t.label})` : t.label }))
         ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
         allHistory.forEach(record => {
